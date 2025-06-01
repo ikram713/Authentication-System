@@ -7,6 +7,8 @@ const sendOtpEmail = require("../Config/sendOtp");
 const router = express.Router();
 const validator = require("validator");
 
+
+
 //  Local Signup Route
 router.post("/signup", async (req, res) => {
     try {

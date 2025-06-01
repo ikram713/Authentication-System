@@ -3,7 +3,6 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const bcrypt = require("bcryptjs");
-
 const LocalUser = require("../Models/LocalUser");
 const GoogleUser = require("../Models/GoogleUser");
  // Import Admin Model
