@@ -207,6 +207,29 @@ router.get("/test-session", (req, res) => {
     res.status(401).json({ message: "Authentication failed" });
   });
    
+  // 🔹 GitHub Auth Route
+router.get("/github", passport.authenticate("github", { scope: ["user:email"] }));
+
+// 🔹 GitHub OAuth Callback
+router.get(
+  "/github/callback",
+  passport.authenticate("github", { failureRedirect: "/auth/failure" }),
+  (req, res) => {
+    console.log("✅ GitHub Login Successful!");
+    req.session.save((err) => {
+      if (err) {
+        console.error("❌ Error saving session:", err);
+        return res.status(500).json({ message: "Session save error" });
+      }
+      res.redirect("/auth/dashboard");
+    });
+  }
+);
+
+
+
+
+
 module.exports = router;
 
 /**

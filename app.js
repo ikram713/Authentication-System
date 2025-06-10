@@ -47,7 +47,7 @@ app.use(passport.session());
 // CORS
 app.use(
     cors({
-    origin: "http://localhost:3000", // Update as needed
+    origin: "http://localhost:3000", 
     credentials: true,
     })
 );
