@@ -5,6 +5,9 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const bcrypt = require("bcryptjs");
 const LocalUser = require("../Models/LocalUser");
 const GoogleUser = require("../Models/GoogleUser");
+const GitHubStrategy = require("passport-github2").Strategy;
+const GitHubUser = require("../Models/GitHubUser"); // Create this model like GoogleUser
+
  // Import Admin Model
 
 // 🔹 Local Strategy (For Normal Users)
@@ -83,6 +86,46 @@ passport.use(
     )
 );
 
+
+passport.use(
+  new GitHubStrategy(
+    {
+      clientID: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      callbackURL: "/auth/github/callback",
+      scope: ["user:email"]
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        const email = profile.emails?.[0]?.value;
+        if (!email) return done(null, false, { message: "No email from GitHub profile." });
+
+        let localUser = await LocalUser.findOne({ email });
+        if (localUser) {
+          localUser.githubId = profile.id;
+          await localUser.save();
+          return done(null, localUser);
+        }
+
+        let githubUser = await GitHubUser.findOne({ email });
+
+        if (!githubUser) {
+          githubUser = new GitHubUser({
+            githubId: profile.id,
+            email,
+            name: profile.displayName || profile.username,
+          });
+          await githubUser.save();
+        }
+
+        return done(null, githubUser);
+      } catch (err) {
+        return done(err);
+      }
+    }
+  )
+);
+
 //🔹 Serialize User (Handles Local Users, Google Users, and Admins)
 passport.serializeUser((user, done) => {
   done(null, { id: user.id, name: user.name, email: user.email, role: user.role || "user" });
@@ -108,6 +151,4 @@ passport.deserializeUser(async (sessionData, done) => {
     done(err);
     }
 });
-
-
 module.exports = passport;
