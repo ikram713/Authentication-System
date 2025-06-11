@@ -8,7 +8,8 @@ const GoogleUser = require("../Models/GoogleUser");
 const GitHubStrategy = require("passport-github2").Strategy;
 const GitHubUser = require("../Models/GitHubUser"); // Create this model like GoogleUser
 
- // Import Admin Model
+
+
 
 // 🔹 Local Strategy (For Normal Users)
 passport.use(
@@ -29,24 +30,7 @@ passport.use(
     }  })
 );
 
-// 🔹 Admin Local Strategy (For Admins)
-passport.use(
-  "admin-local",
-  new LocalStrategy({ usernameField: "email" }, async (email, password, done) => {
-    try {
-      const admin = await Admin.findOne({ email });
 
-      if (!admin) return done(null, false, { message: "Admin not found" });
-
-      const isMatch = await bcrypt.compare(password, admin.password);
-      if (!isMatch) return done(null, false, { message: "Incorrect password" });
-
-      return done(null, admin);
-    } catch (err) {
-      return done(err);
-    }
-  })
-);
 
 // 🔹 Google Strategy (For Google OAuth Users)
 passport.use(
@@ -87,19 +71,29 @@ passport.use(
 );
 
 
+// Update your GitHub strategy to:
 passport.use(
   new GitHubStrategy(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL: "/auth/github/callback",
-      scope: ["user:email"]
+      scope: ["user:email"],
+      proxy: true, // Request email scope
+      passReqToCallback: false
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        // GitHub might not always return email, so we need to handle that case
         const email = profile.emails?.[0]?.value;
-        if (!email) return done(null, false, { message: "No email from GitHub profile." });
+        
+        if (!email) {
+          return done(null, false, { 
+            message: "Could not retrieve email from GitHub. Please ensure your GitHub account has a verified email."
+          });
+        }
 
+        // Check if user exists in LocalUser collection
         let localUser = await LocalUser.findOne({ email });
         if (localUser) {
           localUser.githubId = profile.id;
@@ -107,13 +101,14 @@ passport.use(
           return done(null, localUser);
         }
 
-        let githubUser = await GitHubUser.findOne({ email });
-
+        // Check if user exists in GitHubUser collection
+        let githubUser = await GitHubUser.findOne({ githubId: profile.id });
         if (!githubUser) {
           githubUser = new GitHubUser({
             githubId: profile.id,
-            email,
+            email: email,
             name: profile.displayName || profile.username,
+            // You might want to store other profile info
           });
           await githubUser.save();
         }
@@ -126,7 +121,7 @@ passport.use(
   )
 );
 
-//🔹 Serialize User (Handles Local Users, Google Users, and Admins)
+//🔹 Serialize User (Handles Local Users, Google Users)
 passport.serializeUser((user, done) => {
   done(null, { id: user.id, name: user.name, email: user.email, role: user.role || "user" });
 });
@@ -137,7 +132,8 @@ passport.deserializeUser(async (sessionData, done) => {
     let user =
         (await LocalUser.findById(sessionData.id)) ||
         (await GoogleUser.findById(sessionData.id)) ||
-        (await Admin.findById(sessionData.id));
+        (await GitHubUser.findById(sessionData.id)) ;
+;
 
     if (!user) return done(null, false);
 
