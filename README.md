@@ -1,11 +1,13 @@
 # Authentication-System
 
-This is a Node.js backend using Express, MongoDB, and Passport.js for user authentication with sessions.
+A simple Node.js backend with Express, MongoDB, Passport.js, and session-based authentication.
 
-## Features
+---
 
-- Local and Google login
-- Session-based authentication
-- MongoDB for user and session storage
-- Swagger documentation
+## ✅ Features
+
+- Local signup & login (with email OTP verification)
+- Google Sign-In via OAuth
+- GitHub Sign-In via OAuth
+- API docs via Swagger UI (`/api-docs`)
 
