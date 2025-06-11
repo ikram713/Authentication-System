@@ -405,3 +405,66 @@ module.exports = router;
  *       200:
  *         description: Returns session and user info
  */
+
+/**
+ * @swagger
+ * tags:
+ *   name: GitHubAuth
+ *   description: GitHub OAuth authentication
+ */
+
+/**
+ * @swagger
+ * /auth/github:
+ *   get:
+ *     summary: Initiate GitHub OAuth login
+ *     tags: [GitHubAuth]
+ *     responses:
+ *       '302':
+ *         description: Redirects to GitHub for authentication
+ */
+
+/**
+ * @swagger
+ * /auth/github/callback:
+ *   get:
+ *     summary: GitHub OAuth callback
+ *     tags: [GitHubAuth]
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         description: Authorization code returned by GitHub
+ *       - in: query
+ *         name: state
+ *         schema:
+ *           type: string
+ *         description: State parameter for CSRF protection (if used)
+ *     responses:
+ *       '302':
+ *         description: Redirect to home page or dashboard on success
+ *       '401':
+ *         description: Authentication failed or unauthorized
+ */
+
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     githubOAuth:
+ *       type: oauth2
+ *       description: OAuth2 flow using GitHub
+ *       flows:
+ *         authorizationCode:
+ *           authorizationUrl: https://github.com/login/oauth/authorize
+ *           tokenUrl: https://github.com/login/oauth/access_token
+ *           scopes:
+ *             user: Access to user email and profile info
+ */
+
+/**
+ * @swagger
+ * security:
+ *   - githubOAuth: [user]
+ */
